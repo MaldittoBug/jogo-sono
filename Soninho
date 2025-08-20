@@ -1,0 +1,196 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Quiz de Mitos e Verdades</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background: linear-gradient(135deg, #74ebd5, #9face6);
+      margin: 0;
+      padding: 0;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+      color: #333;
+    }
+    .quiz-container {
+      background: white;
+      border-radius: 20px;
+      box-shadow: 0 8px 20px rgba(0,0,0,0.2);
+      padding: 30px;
+      width: 90%;
+      max-width: 600px;
+      text-align: center;
+    }
+    h1 {
+      margin-bottom: 20px;
+    }
+    .question {
+      font-size: 1.3em;
+      margin: 20px 0;
+    }
+    button {
+      background: #4caf50;
+      color: white;
+      border: none;
+      padding: 10px 20px;
+      margin: 10px;
+      border-radius: 12px;
+      cursor: pointer;
+      transition: transform 0.2s, background 0.3s;
+      font-size: 1em;
+    }
+    button:hover {
+      background: #45a049;
+      transform: scale(1.05);
+    }
+    .feedback {
+      font-weight: bold;
+      margin-top: 15px;
+      font-size: 1.2em;
+    }
+    .hidden {
+      display: none;
+    }
+    .medal {
+      font-size: 2em;
+      margin: 10px 0;
+    }
+    .timer {
+      font-size: 1.2em;
+      font-weight: bold;
+      margin: 15px 0;
+      color: #d9534f;
+    }
+  </style>
+</head>
+<body>
+  <div class="quiz-container">
+    <h1>Quiz: Mitos e Verdades</h1>
+    <div id="category"></div>
+    <div id="timer" class="timer hidden"></div>
+    <div class="question" id="question"></div>
+    <div id="options"></div>
+    <div id="feedback" class="feedback"></div>
+    <button id="nextBtn" class="hidden">Próxima Pergunta</button>
+    <div id="score" class="hidden"></div>
+  </div>
+
+  <script>
+    const questions = [
+      { text: "Dormir após o almoço prejudica a saúde.", answer: "Mito", category: "Hábitos do Sono", difficulty: "Fácil" },
+      { text: "A apneia do sono pode causar problemas cardíacos.", answer: "Verdade", category: "Doenças do Sono", difficulty: "Médio" },
+      { text: "Café antes de dormir atrapalha o sono.", answer: "Verdade", category: "Alimentação", difficulty: "Fácil" },
+      { text: "Quem ronca sempre tem apneia.", answer: "Mito", category: "Doenças do Sono", difficulty: "Médio" },
+      { text: "Usar celular antes de dormir atrapalha a qualidade do sono.", answer: "Verdade", category: "Tecnologia", difficulty: "Difícil" }
+    ];
+
+    let currentIndex = 0;
+    let score = 0;
+    let timer;
+    let timeLeft = 15;
+
+    function showQuestion() {
+      document.getElementById("feedback").textContent = "";
+      document.getElementById("nextBtn").classList.add("hidden");
+      if (currentIndex < questions.length) {
+        const q = questions[currentIndex];
+        document.getElementById("question").textContent = `${q.text} (Dificuldade: ${q.difficulty})`;
+        document.getElementById("category").textContent = `Categoria: ${q.category}`;
+        const optionsDiv = document.getElementById("options");
+        optionsDiv.innerHTML = "";
+
+        ["Mito", "Verdade"].forEach(opt => {
+          const btn = document.createElement("button");
+          btn.textContent = opt;
+          btn.onclick = () => checkAnswer(opt);
+          optionsDiv.appendChild(btn);
+        });
+
+        // iniciar cronômetro
+        timeLeft = 15;
+        document.getElementById("timer").classList.remove("hidden");
+        document.getElementById("timer").textContent = `Tempo restante: ${timeLeft}s`;
+        clearInterval(timer);
+        timer = setInterval(() => {
+          timeLeft--;
+          document.getElementById("timer").textContent = `Tempo restante: ${timeLeft}s`;
+          if (timeLeft <= 0) {
+            clearInterval(timer);
+            checkAnswer(null);
+          }
+        }, 1000);
+      } else {
+        endQuiz();
+      }
+    }
+
+    function checkAnswer(answer) {
+      clearInterval(timer);
+      const q = questions[currentIndex];
+      const feedback = document.getElementById("feedback");
+      if (answer === q.answer) {
+        feedback.textContent = "✅ Resposta correta!";
+        score++;
+      } else if (answer === null) {
+        feedback.textContent = "⏰ Tempo esgotado!";
+      } else {
+        feedback.textContent = "❌ Resposta incorreta!";
+      }
+      document.getElementById("nextBtn").classList.remove("hidden");
+    }
+
+    function nextQuestion() {
+      currentIndex++;
+      showQuestion();
+    }
+
+    function endQuiz() {
+      document.getElementById("category").classList.add("hidden");
+      document.getElementById("question").classList.add("hidden");
+      document.getElementById("options").classList.add("hidden");
+      document.getElementById("timer").classList.add("hidden");
+      document.getElementById("feedback").classList.add("hidden");
+      document.getElementById("nextBtn").classList.add("hidden");
+
+      let medal = "";
+      let message = "";
+      const percentage = (score / questions.length) * 100;
+
+      if (percentage === 100) {
+        medal = "🥇";
+        message = "Excelente! Você acertou todas!";
+      } else if (percentage >= 70) {
+        medal = "🥈";
+        message = "Muito bem! Você foi ótimo.";
+      } else if (percentage >= 50) {
+        medal = "🥉";
+        message = "Bom esforço! Continue praticando.";
+      } else {
+        message = "Não desanime! Tente novamente.";
+      }
+
+      document.getElementById("score").innerHTML = `
+        <div class="medal">${medal}</div>
+        <p>Sua pontuação final: ${score} de ${questions.length}</p>
+        <p>${message}</p>
+      `;
+      document.getElementById("score").classList.remove("hidden");
+
+      // salvar recorde no localStorage
+      const bestScore = localStorage.getItem("bestScore") || 0;
+      if (score > bestScore) {
+        localStorage.setItem("bestScore", score);
+      }
+      const record = localStorage.getItem("bestScore");
+      document.getElementById("score").innerHTML += `<p>Recorde: ${record} pontos</p>`;
+    }
+
+    document.getElementById("nextBtn").addEventListener("click", nextQuestion);
+    showQuestion();
+  </script>
+</body>
+</html>
