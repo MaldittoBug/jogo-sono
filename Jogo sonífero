@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Jogo: Mitos e Verdades sobre o Sono</title>
+<style>
+  body {
+    font-family: Arial, sans-serif;
+    background: #f0f8ff;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100vh;
+    margin: 0;
+    transition: background 0.5s;
+  }
+  .container {
+    background: #fff;
+    padding: 25px;
+    border-radius: 12px;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.25);
+    max-width: 550px;
+    text-align: center;
+    transition: transform 0.5s, opacity 0.5s;
+  }
+  button {
+    margin: 10px;
+    padding: 12px 20px;
+    font-size: 16px;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: 0.3s;
+  }
+  .btn-mito { background: #f08080; color: #fff; }
+  .btn-verdade { background: #20b2aa; color: #fff; }
+  .btn-mito:hover { background: #cd5c5c; }
+  .btn-verdade:hover { background: #008b8b; }
+  #feedback { margin-top: 15px; font-weight: bold; min-height: 40px; transition: all 0.5s; }
+  #btnProxima { display: none; background: #ffa500; color: #fff; padding: 10px 20px; font-size: 16px; border-radius: 8px; }
+  #btnProxima:hover { background: #ff8c00; }
+  #pontuacao { margin-top: 10px; font-size: 18px; font-weight: bold; }
+  #timer { font-size: 18px; font-weight: bold; color: #333; margin-top: 10px; }
+</style>
+</head>
+<body>
+<div class="container">
+  <h2>🛌 Jogo: Mitos e Verdades sobre o Sono</h2>
+  <p id="pergunta"></p>
+  <button class="btn-mito" onclick="responder('MITO')">MITO</button>
+  <button class="btn-verdade" onclick="responder('VERDADE')">VERDADE</button>
+  <p id="feedback"></p>
+  <p id="pontuacao"></p>
+  <p id="timer"></p>
+  <button id="btnProxima" onclick="proximaPergunta()">➡ Próxima</button>
+</div>
+
+<script>
+const perguntasOriginais = [
+  { q:"Precisamos dormir exatamente 8 horas todas as noites.", a:"MITO", exp:"A necessidade varia entre 7 e 9 horas.", diff:"Fácil" },
+  { q:"Beber álcool antes de dormir ajuda a ter um sono melhor.", a:"MITO", exp:"O álcool fragmenta o sono e piora sua qualidade.", diff:"Fácil" },
+  { q:"O sono tem fases importantes como REM e NREM.", a:"VERDADE", exp:"Essas fases são fundamentais para descanso físico e mental.", diff:"Médio" },
+  { q:"É possível recuperar todo o sono perdido dormindo mais no fim de semana.", a:"MITO", exp:"Dormir mais depois alivia o cansaço, mas não compensa a privação.", diff:"Médio" },
+  { q:"Roncar pode ser sinal de apneia do sono.", a:"VERDADE", exp:"O ronco pode indicar problemas respiratórios durante o sono.", diff:"Difícil" },
+  { q:"Cochilar à tarde prejudica o sono noturno.", a:"MITO", exp:"Sonecas curtas podem melhorar alerta sem atrapalhar o sono noturno.", diff:"Fácil" },
+  { q:"Luz azul de telas interfere no sono.", a:"VERDADE", exp:"A luz azul inibe a melatonina e atrasa o sono.", diff:"Difícil" }
+];
+
+let perguntas = [...perguntasOriginais];
+let pontos = 0, erros = 0, indiceAtual = 0, tempo = 15, intervalId;
+
+function shuffle(array){
+  for(let i=array.length-1;i>0;i--){
+    const j=Math.floor(Math.random()*(i+1));
+    [array[i], array[j]]=[array[j], array[i]];
+  }
+}
+
+function mostrarPergunta(){
+  if(perguntas.length === 0) return fimDoJogo();
+  shuffle(perguntas);
+  indiceAtual = 0;
+  const container = document.querySelector(".container");
+  container.style.opacity=0;
+  setTimeout(()=>{
+    document.getElementById("pergunta").innerText = perguntas[indiceAtual].q;
+    document.getElementById("feedback").innerText = "";
+    document.getElementById("pontuacao").innerText = `Acertos: ${pontos} | Erros: ${erros}`;
+    document.getElementById("btnProxima").style.display="none";
+    document.body.style.background="#f0f8ff";
+    document.querySelectorAll(".btn-mito, .btn-verdade").forEach(btn=>btn.disabled=false);
+    container.style.opacity=1;
+    startTimer();
+  },300);
+}
+
+function startTimer(){
+  clearInterval(intervalId);
+  tempo=15;
+  document.getElementById("timer").innerText=`Tempo: ${tempo}s`;
+  intervalId = setInterval(()=>{
+    tempo--;
+    document.getElementById("timer").innerText=`Tempo: ${tempo}s`;
+    if(tempo<=0){
+      clearInterval(intervalId);
+      responder("TEMPO");
+    }
+  },1000);
+}
+
+function responder(resposta){
+  clearInterval(intervalId);
+  const perguntaAtual = perguntas[indiceAtual];
+  document.querySelectorAll(".btn-mito, .btn-verdade").forEach(btn=>btn.disabled=true);
+
+  if(resposta === perguntaAtual.a){
+    pontos++;
+    document.getElementById("feedback").innerText = "✅ Correto! "+perguntaAtual.exp;
+    document.body.style.background="#90ee90";
+  } else {
+    erros++;
+    document.getElementById("feedback").innerText = "❌ Errado! "+perguntaAtual.exp;
+    document.body.style.background="#f08080";
+  }
+
+  document.getElementById("pontuacao").innerText = `Acertos: ${pontos} | Erros: ${erros}`;
+  document.getElementById("btnProxima").style.display="inline-block";
+}
+
+function proximaPergunta(){
+  perguntas.splice(indiceAtual,1);
+  if(perguntas.length>0) mostrarPergunta();
+  else fimDoJogo();
+}
+
+function fimDoJogo(){
+  document.getElementById("pergunta").innerText="🎉 Fim do jogo!";
+  document.getElementById("feedback").innerText=`Pontuação final: ${pontos}/${perguntasOriginais.length} | Erros: ${erros} | Acerto: ${Math.round((pontos/perguntasOriginais.length)*100)}%`;
+  document.getElementById("pontuacao").innerText="";
+  document.getElementById("btnProxima").style.display="none";
+  document.getElementById("timer").innerText="";
+  document.body.style.background="#f0f8ff";
+}
+
+mostrarPergunta();
+</script>
+</body>
+</html>
